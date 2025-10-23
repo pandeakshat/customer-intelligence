@@ -1,0 +1,21 @@
+---
+import AboutAcordeon from "../utils/AboutAccordion.astro";
+
+---
+
+<section class="mb-section">
+    <header class="mb-8 grid gap-4 md:grid-cols-2 md:gap-8">
+        <h2 class="text-title">
+            Analytical Capabilities
+        </h2>
+        <p class="text-sm opacity-50 md:text-base">
+            Built with experience across data science, analytics, and machine learning — the Customer Intelligence Hub reflects a unified approach to understanding customers across industries.
+        </p>
+    </header>
+    <section class="grid gap-8 md:grid-cols-2">
+        <AboutAcordeon open={1}/>
+        <div class="w-full aspect-square rounded-br-[10rem] overflow-hidden">
+            <img class="w-full h-full object-cover" src="../src/assets/images/capability.png" alt="some building">
+        </div>
+    </section>
+</section>

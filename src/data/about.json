@@ -1,0 +1,22 @@
+[
+    {
+        "title": "Data Engineering",
+        "description": "Designing clean, structured, and unified data pipelines to prepare customer data for intelligent analysis and machine learning."
+    },
+    {
+        "title": "Predictive Modeling",
+        "description": "Building scalable models that forecast churn, demand, and lifetime value — helping businesses make proactive, data-driven decisions."
+    },
+    {
+        "title": "Behavioral Analytics",
+        "description": "Analyzing customer actions and journeys to uncover patterns that drive engagement, retention, and personalized experiences."
+    },
+    {
+        "title": "Visual Intelligence",
+        "description": "Transforming insights into clear, interactive dashboards and reports that communicate business impact with precision and clarity."
+    },
+    {
+        "title": "AI Personalization",
+        "description": "Leveraging artificial intelligence to recommend, target, and tailor customer experiences across touchpoints and channels."
+    }
+]

@@ -1,0 +1,63 @@
+---
+import CheapButton from "../utils/CheapButton.astro";
+import PortfolioCard from "../utils/PortfolioCard.astro";
+---
+<section class="mb-section">
+    <h2 class="text-title mb-4">
+        Intelligence Modules
+    </h2>
+    <div class="grid gap-8 mb-8 md:grid-cols-2">
+        <p class="text-sm opacity-50">
+            From retention to forecasting — explore how each analytical module helps businesses understand and grow with their customers.
+        </p>
+        <aside class="flex flex-wrap gap-4 text-sm md:justify-items-end">
+            <CheapButton>
+                business
+            </CheapButton>
+            <CheapButton>
+                residential
+            </CheapButton>
+            <CheapButton>
+                hospitality
+            </CheapButton>
+            
+        </aside>
+    </div>
+    <div class="h-[40rem] grid gap-4 md:h-[30rem] md:grid-cols-2 lg:grid-cols-6 lg:grid-rows-4 [&>*]:overflow-hidden">
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/segment.png" alt="Customer Segmentation & Personas" title="Segment"/>
+        </div>
+
+        <div class="w-full h-full lg:row-span-2">
+            <PortfolioCard src="../src/assets/images/retain.png" alt="Churn & Value Analytics" title="Retain"/>
+        </div>
+
+        <div class="w-full h-full lg:row-span-2">
+            <PortfolioCard src="../src/assets/images/react.png" alt="NPS, Voice of Customer & Sentiment" title="React"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/location.png" alt="Geo-Spatial & Demographic Insights" title="Location"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/affinity.png" alt="Cross-Sell & Upsell Optimization" title="Affinity"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/forecast.png" alt="Dynamic Pricing & Demand Forecasting" title="Forecast"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/journey.png" alt="Journey & Funnel Analysis" title="Journey"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/acquisition.png" alt="Acquisition & Conversion Analytics" title="Acquisition"/>
+        </div>
+
+        <div class="w-full h-full lg:col-span-2">
+            <PortfolioCard src="../src/assets/images/loyalty.png" alt="Loyalty & Retention Scoring" title="Loyalty"/>
+        </div>
+    </div>
+</section>
