@@ -1,278 +1,75 @@
-# Customer Intelligence Hub
+# Customer Intelligence Hub (v1.0)
 
-> **Unified analytics system for understanding, predicting, and improving customer behavior — built for real-world business impact.**
+> **Unified analytics system for understanding, predicting, and improving customer behavior — engineered with an API-Ready Monolith architecture.**
 
-[https://customer-intelligence-demo.pandeakshat.com](https://customer-intelligence-demo.pandeakshat.com/) [https://www.python.org/](https://www.python.org/) [https://opensource.org/licenses/MIT](https://opensource.org/licenses/MIT) [#](https://www.kimi.com/chat/19a96866-0212-8f2d-8000-092dfbeb4447#)
+[![Demo App](https://img.shields.io/badge/Demo-Live_App-FF4B4B?style=for-the-badge&logo=streamlit)](https://customer-intelligence-demo.pandeakshat.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 ---
 
 ## 📘 Overview
 
-The **Customer Intelligence Hub** is a production-ready Streamlit application that integrates multiple customer analytics modules — **churn prediction, sentiment analysis, RFM segmentation, and geospatial insights** — into a unified, interactive dashboard. It empowers businesses to proactively reduce churn, understand customer feedback at scale, and drive data-driven retention strategies.
+The **Customer Intelligence Hub** has evolved into a production-grade **Version 1** solution. It is no longer just a collection of scripts, but a cohesive **Full-Stack Data Science Application** designed with a strict separation of concerns (Logic vs. UI).
 
-- **Type**: Full-Stack Data Science Application
-    
-- **Tech Stack**: Python, Streamlit, Scikit-learn, XGBoost, Plotly, SHAP
-    
-- **Status**: Actively Deployed & Maintained
-    
-- **Impact**: 85% recall on churn prediction | 360° customer view
-    
+This system integrates four core engines—**Churn Simulation, Strategic Segmentation, Split-Topic Sentiment, and Contextual Geospatial Analysis**—into a single "Smart" dashboard that auto-detects dataset capabilities and self-heals dirty data.
 
 ---
 
-## ⚙️ Features
+## ⚙️ The "Smart" Core
 
-### 🔮 **Churn Prediction Module**
+Unlike standard dashboards, this application features intelligent middleware that abstracts complexity from the user:
 
-- **Models**: Logistic Regression (baseline) + XGBoost (production) with hyperparameter tuning
-    
-- **Performance**: Achieved **85% recall** on high-risk customers (priority business metric)
-    
-- **Explainability**: Integrated SHAP for model interpretability and individual predictions
-    
-- **Output**: Risk scoring, top churn drivers, and actionable retention recommendations
-    
+* **The Modular Validator**: The "Gatekeeper" that scans uploaded files (CSV/JSON). It detects which columns are present and automatically enables or disables specific modules (e.g., *found 'Lat/Lon'? Enable Geospatial. Found 'Review'? Enable Sentiment*).
+* **Smart Rename & Loader**: A universal data loader that standardizes disparate inputs (e.g., mapping user columns like "Amt" or "Bill" to system standard `TotalAmount`) and handles I/O.
+* **Self-Healing Pipelines**: The logic layer automatically fills missing values, fixes data types, and handles empty strings before they break the model.
 
-### 📊 **Customer Segmentation (RFM)**
+---
 
-- **Methodology**: RFM (Recency, Frequency, Monetary) analysis with K-Means clustering
-    
-- **Deliverable**: Dynamic segment labeling (Champions, At-Risk, Hibernating, etc.)
-    
-- **Visualization**: Interactive 3D scatter plots and segment comparison charts
-    
+## 🚀 The 4 Intelligence Engines
 
-### 💬 **Sentiment Analysis & NLP**
+### 1. 🔮 Churn Prediction & Simulation
+* **Logic**: XGBoost pipeline with "Self-Healing" preprocessing.
+* **The Simulator**: A "What-If" interface allowing stakeholders to tweak variables (e.g., *change Contract from Month-to-Month to One-Year*) and watch the Risk Score drop in real-time.
+* **Directional Importance**: Visualization that shows not just *what* matters, but *how* it matters (e.g., Green bars = lowers risk, Red bars = increases risk).
 
-- **Technique**: LDA (Latent Dirichlet Allocation) for topic modeling + rule-based sentiment scoring
-    
-- **Processing**: Pandas + spaCy for text preprocessing and entity recognition
-    
-- **Output**: Sentiment distribution, keyword extraction, and topic trends over time
-    
+### 2. 📊 Strategic Segmentation (RFM+)
+* **Unified Engine**: Supports both Demographic clustering and RFM (Recency, Frequency, Monetary) analysis.
+* **Rule Extraction**: Uses a Decision Tree overlaid on K-Means clusters to generate plain English rules (e.g., *"Cluster 1 is defined by Age < 30 & Spend > $500"*).
+* **Recommendation Engine**: Translates mathematical Cluster IDs into human personas (e.g., "Gen Z Trendsetter") and suggests strategic actions.
 
-### 🗺️ **Geospatial Insights (Beta)**
+### 3. 💬 Sentiment & Voice of Customer
+* **Split-Topic Analysis**: Unlike standard LDA, this separates topics by sentiment. It identifies exactly what drives *Positive* reviews (e.g., "Fast Service") vs. *Negative* reviews (e.g., "Hidden Fees").
+* **Correlation Matrix**: Statistically identifies which specific sub-rating (Food, Service, Ambiance) has the highest impact on the Overall Rating.
 
-- Regional churn/sentiment heatmaps
-    
-- Location-based customer value analysis
-    
+### 4. 🗺️ Geospatial Intelligence ("Piggyback")
+* **Context-Aware**: This engine does not require its own dataset. It "piggybacks" onto Churn or Sentiment data.
+    * *If Churn Data detected:* Plots a **Risk Heatmap**.
+    * *If Sentiment Data detected:* Plots a **Happiness Map**.
+* **Route Parsing**: Capable of parsing route/transportation data for logistics context.
 
 ---
 
 ## 🧩 Architecture / Design
 
-Text
-
-Copy
+We successfully transitioned from a script-based prototype to an **API-Ready Monolith**.
 
 ```text
 customer-intelligence/
-├── app.py                          # Main Streamlit orchestrator
-├── modules/
-│   ├── churn_analysis.py          # XGBoost + SHAP pipeline
-│   ├── sentiment_analysis.py      # LDA + NLP preprocessing
-│   ├── segmentation.py             # RFM + K-Means engine
-│   └── geospatial.py               # GeoPandas visualization
+├── app.py                   # The Orchestrator (Auto-detects capabilities)
+├── src/                     # PURE LOGIC (No UI Code)
+│   ├── data_loader.py       # Handles I/O & Smart Renaming
+│   ├── validator.py         # The Gatekeeper (Auto-detects columns)
+│   ├── churn_engine.py      # XGBoost + SHAP + Simulator
+│   ├── segment_engine.py    # K-Means + Rule Extraction
+│   ├── sentiment_engine.py  # VADER + Split-Topic LDA
+│   ├── geo_engine.py        # Piggyback Context Mapper
+│   └── recommendation_engine.py # Business Logic & Personas
+├── pages/                   # PURE UI (Streamlit widgets only)
+│   ├── 1_Churn_Profiler.py
+│   ├── 2_RFM_Segmentation.py
+│   ├── 3_Sentiment_Analysis.py
+│   └── 4_Geospatial_View.py
 ├── data/
-│   ├── sample_customer_data.csv    # Synthetic dataset (10K records)
-│   └── model_artifacts/            # Serialized models + encoders
-├── requirements.txt
-└── README.md
-```
-
-**Component Flow**:
-
-- **Modular Design**: Each module is self-contained with clear inputs/outputs for scalability
-    
-- **Central Interface**: Streamlit acts as the integration layer, calling modules and rendering Plotly visuals
-    
-- **Model Registry**: Serialized models in `model_artifacts/` enable fast loading and reproducibility
-    
-- **Business Logic**: All modules return both data and human-readable insights for stakeholder communication
-    
-
----
-
-## 🚀 Quick Start
-
-### 1. Clone and Setup
-
-bash
-
-Copy
-
-```bash
-git clone https://github.com/pandeakshat/customer-intelligence.git
-cd customer-intelligence
-```
-
-### 2. Install Dependencies
-
-bash
-
-Copy
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run Application
-
-bash
-
-Copy
-
-```bash
-streamlit run app.py
-```
-
-> **Live Demo**: The app deploys automatically to [customer-intelligence-demo.pandeakshat.com](https://customer-intelligence-demo.pandeakshat.com/)
-
----
-
-## 🧠 Example Output / Demo
-
-The dashboard provides **four interactive views**:
-
-1. **Churn Risk Profiler**:
-    
-    - Filter by segment, tenure, or product usage
-        
-    - SHAP waterfall charts explain _why_ a customer is high-risk
-        
-    - Downloadable retention priority list
-        
-2. **RFM Segment Explorer**:
-    
-    - 3D cluster visualization with hover details
-        
-    - Segment migration tracking over quarters
-        
-3. **Sentiment Analysis Panel**:
-    
-    - Topic trend line charts
-        
-    - Keyword co-occurrence network graph
-        
-4. **Executive Summary**:
-    
-    - Automated insights generation (e.g., "High-value customers in North America show 23% higher churn risk")
-        
-
----
-
-## 📊 Impact & Results
-
-Table
-
-Copy
-
-|Metric|Value|Business Interpretation|
-|:--|:--|:--|
-|**Churn Recall**|85%|Correctly identifies 8.5/10 customers who will leave|
-|**Model Precision**|72%|7.2/10 flagged customers actually churn (minimize false alarms)|
-|**Segmentation Coverage**|100%|All 10K+ customers automatically segmented monthly|
-|**Sentiment Processing**|~15K reviews/hr|Scalable NLP pipeline for real-time feedback analysis|
-
-**Key Business Outcomes**:
-
-- Enables proactive retention campaigns for high-risk cohorts
-    
-- Reduces manual segmentation effort from 3 days to 30 minutes
-    
-- Provides explainable predictions for C-suite stakeholder trust
-    
-
----
-
-## 🔍 Core Concepts
-
-Table
-
-Copy
-
-|Area|Tools & Techniques|Purpose|
-|:--|:--|:--|
-|**Data Pipeline**|Pandas, NumPy, scikit-learn pipelines|Robust preprocessing + feature engineering|
-|**Predictive Modeling**|XGBoost, Logistic Regression, cross-validation|High-performance churn prediction|
-|**Model Explainability**|SHAP (TreeExplainer)|Interpretable AI for business trust|
-|**Segmentation**|RFM analysis, K-Means, StandardScaler|Behavior-based customer grouping|
-|**NLP**|spaCy (lemmatization), LDA (Gensim), VADER|Scalable sentiment & topic modeling|
-|**Visualization**|Plotly Express, GeoPandas, Streamlit components|Interactive, publication-quality charts|
-
----
-
-## 📈 Roadmap
-
-- [x] Core churn + sentiment modules (85% recall achieved)
-    
-- [x] RFM segmentation + K-Means clustering
-    
-- [x] SHAP explainability integration
-    
-- [ ] **Q1 2025**: Geospatial analytics (regional risk heatmaps)
-    
-- [ ] **Q2 2025**: Retention scoring engine + automated email recommendations
-    
-- [ ] **Q3 2025**: Real-time API integration with CRM systems
-    
-- [ ] **Future**: A/B testing framework for retention interventions
-    
-
----
-
-## 🧮 Tech Highlights
-
-**Languages:** Python, SQL  
-**ML Frameworks:** Scikit-learn, XGBoost, SHAP, Gensim (LDA)  
-**Data Stack:** Pandas, NumPy, spaCy, GeoPandas  
-**Visualization:** Plotly, Streamlit, Matplotlib (for SHAP)  
-**Deployment:** AWS EC2 + Docker (containerized)  
-**MLOps:** Model versioning with `joblib`, automated CI/CD via GitHub Actions  
-**Integrations:** Compatible with [Data Intelligence](https://github.com/pandeakshat/data-intelligence) for data auditing
-
----
-
-## 🧰 Dependencies
-
-txt
-
-Copy
-
-```txt
-streamlit==1.32.0
-pandas==2.1.4
-numpy==1.26.2
-scikit-learn==1.4.0
-xgboost==2.0.3
-plotly==5.18.0
-shap==0.44.0
-spacy==3.7.2
-gensim==4.3.2
-geopandas==0.14.3
-```
-
----
-
-## 🧾 License
-
-MIT License © [Akshat Pande](https://github.com/pandeakshat)
-
----
-
-## 🧩 Related Projects
-
-- [https://github.com/pandeakshat/data-intelligence](https://github.com/pandeakshat/data-intelligence) — Dataset audit & augmentation tool (pre-processing pipeline for this project)
-    
-- [https://github.com/pandeakshat/project-flow](https://github.com/pandeakshat/project-flow) — Smart productivity and task-flow manager (project management)
-    
-
----
-
-## 💬 Contact
-
-**Akshat Pande**  
-📧 [mail@pandeakshat.com](mailto:mail@pandeakshat.com)  
-🌐 [Portfolio](https://pandeakshat.com/) | [LinkedIn](https://linkedin.com/in/pandeakshat) | [GitHub](https://github.com/pandeakshat)
+│   └── model_artifacts/     # Serialized models
+└── requirements.txt
