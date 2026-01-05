@@ -1,75 +1,66 @@
-# Customer Intelligence Hub (v1.0)
+# Customer Intelligence Hub
 
-> **Unified analytics system for understanding, predicting, and improving customer behavior — engineered with an API-Ready Monolith architecture.**
+**Customer Intelligence Hub** is a modular, end-to-end data science application built with Streamlit. It transforms raw customer data into actionable business strategies by integrating predictive modeling (XGBoost), unsupervised learning (K-Means), Natural Language Processing (VADER/LDA), and geospatial analysis into a unified interface.
 
-[![Demo App](https://img.shields.io/badge/Demo-Live_App-FF4B4B?style=for-the-badge&logo=streamlit)](https://customer-intelligence-demo.pandeakshat.com/)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+The application features a "Piggyback" architecture, allowing independent analytic modules to activate automatically based on the detected schema of uploaded datasets.
 
----
+## Core Capabilities
 
-## 📘 Overview
+* **Churn Prediction Engine:** Uses XGBoost for classification and SHAP values for explainability. Features include a "Self-Healing" data cleaner and a real-time "What-If" simulator for testing retention strategies.
+* **Segmentation Engine:** Implements K-Means clustering with an overlaid Decision Tree for rule extraction. Automatically detects analysis modes (Demographic vs. RFM) and generates descriptive "Smart Labels" for clusters.
+* **Sentiment Analysis:** A hybrid NLP pipeline utilizing VADER for polarity scoring and Latent Dirichlet Allocation (LDA) for topic modeling to extract key themes from customer reviews.
+* **Geospatial Intelligence:** A hybrid location engine that combines a static local database, fuzzy matching for spelling correction, and API-based geocoding to map customer performance globally.
+* **Natural Language Generation (NLG):** A rule-based text generation system that converts statistical summaries into human-readable executive summaries.
 
-The **Customer Intelligence Hub** has evolved into a production-grade **Version 1** solution. It is no longer just a collection of scripts, but a cohesive **Full-Stack Data Science Application** designed with a strict separation of concerns (Logic vs. UI).
+## Technical Architecture
 
-This system integrates four core engines—**Churn Simulation, Strategic Segmentation, Split-Topic Sentiment, and Contextual Geospatial Analysis**—into a single "Smart" dashboard that auto-detects dataset capabilities and self-heals dirty data.
+The project follows a component-based architecture:
 
----
+* `app.py`: Central controller handling state management and module routing.
+* `src/engines`: Isolated logic for Churn, Segmentation, Geo, and Sentiment.
+* `src/components`: Reusable UI elements (Navigation, Data Loader).
+* **State Management:** Robust usage of Streamlit Session State for data persistence across pages.
 
-## ⚙️ The "Smart" Core
+## Installation
 
-Unlike standard dashboards, this application features intelligent middleware that abstracts complexity from the user:
+1.  Clone the repository:
+    ```bash
+    git clone [https://github.com/yourusername/customer-intelligence-hub.git](https://github.com/yourusername/customer-intelligence-hub.git)
+    cd customer-intelligence-hub
+    ```
 
-* **The Modular Validator**: The "Gatekeeper" that scans uploaded files (CSV/JSON). It detects which columns are present and automatically enables or disables specific modules (e.g., *found 'Lat/Lon'? Enable Geospatial. Found 'Review'? Enable Sentiment*).
-* **Smart Rename & Loader**: A universal data loader that standardizes disparate inputs (e.g., mapping user columns like "Amt" or "Bill" to system standard `TotalAmount`) and handles I/O.
-* **Self-Healing Pipelines**: The logic layer automatically fills missing values, fixes data types, and handles empty strings before they break the model.
+2.  Create a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
 
----
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## 🚀 The 4 Intelligence Engines
+## Usage
 
-### 1. 🔮 Churn Prediction & Simulation
-* **Logic**: XGBoost pipeline with "Self-Healing" preprocessing.
-* **The Simulator**: A "What-If" interface allowing stakeholders to tweak variables (e.g., *change Contract from Month-to-Month to One-Year*) and watch the Risk Score drop in real-time.
-* **Directional Importance**: Visualization that shows not just *what* matters, but *how* it matters (e.g., Green bars = lowers risk, Red bars = increases risk).
+1.  Start the application:
+    ```bash
+    streamlit run app.py
+    ```
 
-### 2. 📊 Strategic Segmentation (RFM+)
-* **Unified Engine**: Supports both Demographic clustering and RFM (Recency, Frequency, Monetary) analysis.
-* **Rule Extraction**: Uses a Decision Tree overlaid on K-Means clusters to generate plain English rules (e.g., *"Cluster 1 is defined by Age < 30 & Spend > $500"*).
-* **Recommendation Engine**: Translates mathematical Cluster IDs into human personas (e.g., "Gen Z Trendsetter") and suggests strategic actions.
+2.  **Upload Data:** Navigate to the Home page. You can upload your own CSV/Excel files or load the provided sample datasets for testing.
+3.  **Validation:** The system will validate your schema. Green checkmarks indicate the module is ready.
+4.  **Navigation:** Use the sidebar to access specific analytical engines (Churn, Segmentation, etc.).
 
-### 3. 💬 Sentiment & Voice of Customer
-* **Split-Topic Analysis**: Unlike standard LDA, this separates topics by sentiment. It identifies exactly what drives *Positive* reviews (e.g., "Fast Service") vs. *Negative* reviews (e.g., "Hidden Fees").
-* **Correlation Matrix**: Statistically identifies which specific sub-rating (Food, Service, Ambiance) has the highest impact on the Overall Rating.
+## Dependencies
 
-### 4. 🗺️ Geospatial Intelligence ("Piggyback")
-* **Context-Aware**: This engine does not require its own dataset. It "piggybacks" onto Churn or Sentiment data.
-    * *If Churn Data detected:* Plots a **Risk Heatmap**.
-    * *If Sentiment Data detected:* Plots a **Happiness Map**.
-* **Route Parsing**: Capable of parsing route/transportation data for logistics context.
+* Streamlit
+* Pandas / NumPy
+* Scikit-Learn
+* XGBoost
+* SHAP
+* Plotly
+* Geopy
 
----
+## License
 
-## 🧩 Architecture / Design
-
-We successfully transitioned from a script-based prototype to an **API-Ready Monolith**.
-
-```text
-customer-intelligence/
-├── app.py                   # The Orchestrator (Auto-detects capabilities)
-├── src/                     # PURE LOGIC (No UI Code)
-│   ├── data_loader.py       # Handles I/O & Smart Renaming
-│   ├── validator.py         # The Gatekeeper (Auto-detects columns)
-│   ├── churn_engine.py      # XGBoost + SHAP + Simulator
-│   ├── segment_engine.py    # K-Means + Rule Extraction
-│   ├── sentiment_engine.py  # VADER + Split-Topic LDA
-│   ├── geo_engine.py        # Piggyback Context Mapper
-│   └── recommendation_engine.py # Business Logic & Personas
-├── pages/                   # PURE UI (Streamlit widgets only)
-│   ├── 1_Churn_Profiler.py
-│   ├── 2_RFM_Segmentation.py
-│   ├── 3_Sentiment_Analysis.py
-│   └── 4_Geospatial_View.py
-├── data/
-│   └── model_artifacts/     # Serialized models
-└── requirements.txt
+Distributed under the MIT License. See LICENSE for more information.

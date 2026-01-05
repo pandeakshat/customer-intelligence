@@ -1,4 +1,3 @@
-# src/sentiment_engine.py
 import pandas as pd
 import numpy as np
 import re
@@ -25,6 +24,7 @@ class SentimentAnalyzer:
             
         # Clean text helper
         def clean_text(text):
+            if pd.isna(text): return ""
             text = str(text).lower()
             text = re.sub(r'[^a-z\s]', '', text) # Remove punctuation
             return text
@@ -35,6 +35,13 @@ class SentimentAnalyzer:
         clean_texts = []
         
         for text in df[text_col]:
+            # Handle NaN/Empty
+            if pd.isna(text) or str(text).strip() == "":
+                scores.append(0)
+                labels.append('Neutral')
+                clean_texts.append("")
+                continue
+
             # Clean for topic modeling later
             clean_texts.append(clean_text(text))
             
@@ -64,11 +71,15 @@ class SentimentAnalyzer:
             return {}
 
         # Vectorize (Turn text into numbers)
-        # max_df=0.95 (ignore words appearing in >95% of docs)
-        # min_df=2 (ignore unique words)
-        # stop_words='english' removes common words (the, and, is)
+        # Drop empty strings to avoid errors
+        valid_text = df[text_col].dropna()
+        valid_text = valid_text[valid_text.str.len() > 2] # Must be > 2 chars
+        
+        if valid_text.empty:
+            return {}
+
         self.vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words='english')
-        dtm = self.vectorizer.fit_transform(df[text_col].dropna())
+        dtm = self.vectorizer.fit_transform(valid_text)
         
         # Train LDA
         self.lda_model = LatentDirichletAllocation(n_components=n_topics, random_state=42)
@@ -92,18 +103,27 @@ class SentimentAnalyzer:
         if not self.lda_model or text_col not in df.columns:
             return df
             
-        dtm = self.vectorizer.transform(df[text_col].dropna())
+        valid_mask = (df[text_col].notna()) & (df[text_col].str.len() > 2)
+        valid_text = df.loc[valid_mask, text_col]
+        
+        if valid_text.empty:
+            return df
+
+        dtm = self.vectorizer.transform(valid_text)
         topic_results = self.lda_model.transform(dtm)
         
         # Get index of max probability
         dominant_topics = topic_results.argmax(axis=1)
         
-        # Align with original index (since we dropped NA)
+        # Align with original index
         df_out = df.copy()
-        # Create a series with the same index as the dropna input
-        topic_series = pd.Series(dominant_topics, index=df[text_col].dropna().index)
         
-        df_out['Topic_ID'] = topic_series
-        df_out['Topic_Label'] = df_out['Topic_ID'].apply(lambda x: f"Topic {int(x)+1}" if pd.notnull(x) else "Unknown")
+        # Initialize columns
+        df_out['Topic_ID'] = -1
+        df_out['Topic_Label'] = "Unknown"
+        
+        # Assign only to valid rows
+        df_out.loc[valid_mask, 'Topic_ID'] = dominant_topics
+        df_out.loc[valid_mask, 'Topic_Label'] = [f"Topic {t+1}" for t in dominant_topics]
         
         return df_out

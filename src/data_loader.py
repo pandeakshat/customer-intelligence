@@ -1,8 +1,3 @@
-# src/data_loader.py
-import pandas as pd
-import os
-
-# src/data_loader.py
 import pandas as pd
 import os
 import io
@@ -18,13 +13,12 @@ def load_dataset(file_source, mapping: dict = None) -> pd.DataFrame:
             return pd.DataFrame()
         _, ext = os.path.splitext(file_source)
         ext = ext.lower()
-        source = file_source # Pass path to pandas
+        source = file_source 
     else:
         # It's a Streamlit UploadedFile object (Memory Buffer)
-        # We assume CSV by default for uploads, or check name
         filename = getattr(file_source, "name", "").lower()
         ext = os.path.splitext(filename)[1] if filename else ".csv"
-        source = file_source # Pass buffer to pandas
+        source = file_source 
 
     try:
         # 2. Load based on extension
@@ -41,7 +35,6 @@ def load_dataset(file_source, mapping: dict = None) -> pd.DataFrame:
 
         # 3. Apply Column Mapping (Smart Rename)
         if mapping:
-            # {Standard: Actual} -> {Actual: Standard}
             rename_dict = {v: k for k, v in mapping.items()}
             df = df.rename(columns=rename_dict)
 
@@ -50,12 +43,7 @@ def load_dataset(file_source, mapping: dict = None) -> pd.DataFrame:
     except Exception as e:
         print(f"Error loading data: {e}")
         return pd.DataFrame()
+
 def normalize_columns(df, mapping):
-    """
-    Renames the columns based on the Validator's discovery.
-    Input: df, mapping={'TotalAmount': 'Amt'}
-    Output: df with 'TotalAmount' column
-    """
-    # Invert the mapping to fit pandas rename format: {OldName: NewName}
     rename_dict = {v: k for k, v in mapping.items()}
     return df.rename(columns=rename_dict)

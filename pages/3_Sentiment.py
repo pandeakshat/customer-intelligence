@@ -1,178 +1,146 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-
-# --- IMPORTS ---
 from components.navigation import sidebar_menu
 from src.sentiment_engine import SentimentAnalyzer
 from src.data_loader import load_dataset
 from src.config import FILES
 
-st.set_page_config(page_title="Voice of Customer", layout="wide")
+st.set_page_config(page_title="Sentiment AI", layout="wide")
 sidebar_menu()
 
-# --- SETUP ---
-if 'sentiment_bot' not in st.session_state:
-    st.session_state['sentiment_bot'] = SentimentAnalyzer()
-    
-bot = st.session_state['sentiment_bot']
+# --- 1. RESET LOGIC (Sidebar) ---
+# This is crucial: It lets you "Retrain" if you picked the wrong column
+with st.sidebar:
+    st.markdown("---")
+    st.header("⚙️ Controls")
+    if st.button("♻️ Reset Analysis", type="secondary"):
+        if 'sentiment_results' in st.session_state:
+            del st.session_state['sentiment_results']
+        if 'topics' in st.session_state:
+            del st.session_state['topics']
+        st.rerun()
 
-# --- HELPER: GET DATA ---
+# --- 2. LOAD DATA ---
 def get_sentiment_data():
     if 'capability_map' not in st.session_state: return pd.DataFrame()
     source = st.session_state['capability_map'].get('sentiment')
-    if source == 'MEMORY': return st.session_state['data_cache'].get('sentiment')
-    return load_dataset(FILES.get(source)) if source else pd.DataFrame()
-
-# --- MAIN ---
-st.title("💬 Voice of Customer (NLP)")
-
-# 1. LOAD
-flags = st.session_state.get('flags', {})
-if not flags.get('sentiment'):
-    st.error("❌ No Sentiment Data active.")
-    st.stop()
+    if source == 'MEMORY': return st.session_state['data_cache'].get('sentiment', pd.DataFrame())
+    if source in FILES: return load_dataset(FILES[source])
+    return st.session_state.get('data_cache', {}).get('sentiment', pd.DataFrame())
 
 df = get_sentiment_data()
+st.title("❤️ Sentiment & Topic Engine")
 
-# Identify Text Column
-text_col = None
-possible_cols = ['ReviewBody', 'ReviewText', 'text', 'comment', 'content']
-for c in possible_cols:
-    for col in df.columns:
-        if c.lower() in col.lower():
-            text_col = col
-            break
-    if text_col: break
-
-if not text_col:
-    st.error("Could not auto-detect a text column.")
+if df.empty:
+    st.error("❌ No Sentiment Data Found.")
+    st.info("Please go to Home and load the Airline Reviews dataset.")
     st.stop()
 
-# 2. PROCESS (Run NLP - The 3-Pass Method)
-if 'sentiment_processed' not in st.session_state:
-    with st.spinner("Analyzing Sentiment & Topics..."):
-        # A. Run Sentiment Scoring (VADER)
-        processed_df = bot.analyze_sentiment(df, text_col)
+# --- 3. CONFIGURATION (Only show if analysis hasn't run yet) ---
+if 'sentiment_results' not in st.session_state:
+    st.info("📝 Configure your analysis below.")
+    
+    col_text, col_viz = st.columns(2)
+    
+    with col_text:
+        # A. Text Column Selection
+        # We allow you to choose ANY string column (Header vs Body)
+        text_candidates = df.select_dtypes(include=['object', 'string']).columns
         
-        # B. Pass 1: Global Topics (Assigns Topic ID to every row)
-        topics_global = bot.extract_topics(processed_df, text_col)
-        processed_df = bot.get_topic_distribution(processed_df, text_col)
+        # Smart Default: Try to find 'body' or 'review', else 'header'
+        default_idx = 0
+        for i, c in enumerate(text_candidates):
+            if any(x in c.lower() for x in ['body', 'content', 'text']): # Prioritize Body over Header
+                default_idx = i
+                break
         
-        # C. Pass 2: Positive Topics Only
-        pos_df = processed_df[processed_df['Sentiment_Label'] == 'Positive']
-        if not pos_df.empty:
-            topics_pos = bot.extract_topics(pos_df, 'Clean_Text')
-        else:
-            topics_pos = {}
+        text_col = st.selectbox("1. Select Review Column (Text):", text_candidates, index=default_idx)
+        st.caption("Choose the column containing the actual feedback.")
 
-        # D. Pass 3: Negative Topics Only
-        neg_df = processed_df[processed_df['Sentiment_Label'] == 'Negative']
-        if not neg_df.empty:
-            topics_neg = bot.extract_topics(neg_df, 'Clean_Text')
-        else:
-            topics_neg = {}
-        
-        # Store results
-        st.session_state['sentiment_processed'] = processed_df
-        st.session_state['topics_global'] = topics_global
-        st.session_state['topics_pos'] = topics_pos
-        st.session_state['topics_neg'] = topics_neg
+    with col_viz:
+        # B. Classification Selection
+        # Filter for Categorical columns (Low cardinality)
+        # We pre-select one, but you can change it later in the dashboard
+        cat_candidates = [c for c in df.columns if df[c].nunique() < 50 and c != text_col]
+        default_cat = cat_candidates[0] if cat_candidates else "None"
+        st.write("2. Analysis Mode: Full Corpus + Topic Extraction")
+        st.write(f"*(You can group by '{default_cat}' after analysis)*")
+
+    st.markdown("---")
+    if st.button("🚀 Run AI Analysis", type="primary"):
+        with st.spinner(f"Analyzing '{text_col}'..."):
+            try:
+                analyzer = SentimentAnalyzer()
+                # 1. Sentiment Score
+                df_scored = analyzer.analyze_sentiment(df, text_col)
+                # 2. Topic Modeling
+                topics = analyzer.extract_topics(df_scored, 'Clean_Text', n_topics=5)
+                # 3. Topic Assignment
+                df_final = analyzer.get_topic_distribution(df_scored, 'Clean_Text')
+                
+                st.session_state['sentiment_results'] = df_final
+                st.session_state['topics'] = topics
+                st.rerun()
+            except Exception as e:
+                st.error(f"Analysis Failed: {str(e)}")
+                st.stop()
+
+# --- 4. DASHBOARD (Results Exist) ---
 else:
-    processed_df = st.session_state['sentiment_processed']
-    topics_global = st.session_state['topics_global']
-    topics_pos = st.session_state['topics_pos']
-    topics_neg = st.session_state['topics_neg']
-
-# 3. DASHBOARD
-tab_overview, tab_topics, tab_factors = st.tabs(["📊 Sentiment Overview", "☁️ Topic Themes", "🔍 Satisfaction Drivers"])
-
-# --- TAB 1: OVERVIEW ---
-with tab_overview:
-    k1, k2, k3 = st.columns(3)
-    avg_score = processed_df['Sentiment_Score'].mean()
-    pos_pct = (processed_df['Sentiment_Label'] == 'Positive').mean()
-    neg_pct = (processed_df['Sentiment_Label'] == 'Negative').mean()
+    results = st.session_state['sentiment_results']
+    topics = st.session_state.get('topics', {})
     
-    k1.metric("Average Sentiment", f"{avg_score:.2f}", "-1 to +1 scale")
-    k2.metric("Positive Reviews", f"{pos_pct:.1%}")
-    k3.metric("Negative Reviews", f"{neg_pct:.1%}", delta="Attention" if neg_pct > 0.2 else "Healthy", delta_color="inverse")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Sentiment Distribution")
-        fig_pie = px.pie(processed_df, names='Sentiment_Label', color='Sentiment_Label',
-                         color_discrete_map={'Positive':'#2ecc71', 'Neutral':'#95a5a6', 'Negative':'#e74c3c'})
-        st.plotly_chart(fig_pie, use_container_width=True)
-    with c2:
-        st.subheader("Sentiment Over Time")
-        date_col = next((c for c in df.columns if any(x in c.lower() for x in ['date', 'time', 'timestamp'])), None)
-        if date_col:
-            processed_df[date_col] = pd.to_datetime(processed_df[date_col], errors='coerce')
-            daily = processed_df.dropna(subset=[date_col]).set_index(date_col).resample('ME')['Sentiment_Score'].mean()
-            st.line_chart(daily)
-        else:
-            st.info("No Date column found.")
+    # --- TOP METRICS ---
+    k1, k2, k3, k4 = st.columns(4)
+    pos = (results['Sentiment_Label'] == 'Positive').mean()
+    neg = (results['Sentiment_Label'] == 'Negative').mean()
+    k1.metric("😊 Positive", f"{pos:.1%}")
+    k2.metric("😡 Negative", f"{neg:.1%}")
+    k3.metric("Neutral", f"{(1-pos-neg):.1%}")
+    k4.metric("Total Reviews", len(results))
 
-# --- TAB 2: TOPICS (UPDATED) ---
-with tab_topics:
-    st.subheader("What are customers talking about?")
+    # --- CLASSIFICATION & SLICING ---
+    st.markdown("### 📊 Classification Analysis")
     
-    # Selection for Visualization
-    view_mode = st.radio("View Topics For:", ["Global (All)", "Positive Only", "Negative Only"], horizontal=True)
+    # Dynamic Grouping
+    slice_cols = [c for c in results.columns if results[c].nunique() < 50 and c not in ['Clean_Text', 'Sentiment_Label', 'Sentiment_Score', 'Topic_Label', 'Topic_ID']]
     
-    col_list, col_cloud = st.columns([1, 2])
-    
-    # DYNAMIC CONTENT BASED ON SELECTION
-    if view_mode == "Global (All)":
-        active_topics = topics_global
-        subset_df = processed_df
-    elif view_mode == "Positive Only":
-        active_topics = topics_pos
-        subset_df = processed_df[processed_df['Sentiment_Label'] == 'Positive']
-    else:
-        active_topics = topics_neg
-        subset_df = processed_df[processed_df['Sentiment_Label'] == 'Negative']
-
-    with col_list:
-        st.write(f"### {view_mode} Themes")
-        if not active_topics:
-            st.warning("No topics found for this category.")
-        else:
-            for topic, words in active_topics.items():
-                with st.expander(f"📌 {topic}", expanded=True):
-                    st.caption(", ".join(words[:6]))
-
-    with col_cloud:
-        st.write("### Word Cloud")
-        if not subset_df.empty:
-            # Join all text for the selected sentiment/group
-            text_corpus = " ".join(subset_df['Clean_Text'].dropna().astype(str).tolist())
+    if slice_cols:
+        c_sel, c_chart = st.columns([1, 3])
+        with c_sel:
+            group_col = st.selectbox("Breakdown By:", slice_cols, index=0)
+            st.caption("Change this to view sentiment across different categories.")
             
-            if text_corpus.strip():
-                # Generate Cloud
-                wordcloud = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(text_corpus)
-                fig, ax = plt.subplots(figsize=(10, 5))
-                ax.imshow(wordcloud, interpolation='bilinear')
-                ax.axis("off")
-                st.pyplot(fig)
-            else:
-                st.warning("Not enough text.")
-        else:
-            st.warning("No data available for this view.")
-
-# --- TAB 3: FACTORS ---
-with tab_factors:
-    st.subheader("Correlation Analysis")
-    rating_cols = [c for c in df.select_dtypes(include=np.number).columns if 'rating' in c.lower() or 'score' in c.lower() or c in ['SeatComfort', 'CabinStaffService', 'Food&Beverages', 'ValueForMoney']]
-    
-    if len(rating_cols) > 1:
-        corr = df[rating_cols].corr()
-        fig_corr = px.imshow(corr, text_auto=True, aspect="auto", color_continuous_scale='RdBu_r')
-        st.plotly_chart(fig_corr, use_container_width=True)
-        st.info("💡 **Tip:** Correlations close to 1.0 (Red) indicate drivers of satisfaction.")
+        with c_chart:
+            # Stacked Bar Chart
+            df_grouped = results.groupby([group_col, 'Sentiment_Label']).size().reset_index(name='Count')
+            fig = px.bar(df_grouped, x=group_col, y='Count', color='Sentiment_Label', 
+                         title=f"Sentiment by {group_col}",
+                         color_discrete_map={'Positive':'#2ecc71', 'Negative':'#e74c3c', 'Neutral':'#95a5a6'})
+            st.plotly_chart(fig, use_container_width=True)
     else:
-        st.warning("Not enough numeric rating columns found.")
+        st.warning("No categorical columns found for grouping.")
+
+    # --- TOPIC ANALYSIS ---
+    st.markdown("---")
+    st.markdown("### 🗣️ Topic Intelligence")
+    
+    t1, t2 = st.columns([2, 1])
+    with t1:
+        if 'Topic_Label' in results.columns:
+            # Topic vs Sentiment
+            fig_topic = px.histogram(results[results['Topic_Label']!='Unknown'], x='Topic_Label', color='Sentiment_Label', 
+                                     barmode='group', title="Sentiment per Topic",
+                                     color_discrete_map={'Positive':'#2ecc71', 'Negative':'#e74c3c', 'Neutral':'#95a5a6'})
+            st.plotly_chart(fig_topic, use_container_width=True)
+            
+    with t2:
+        st.write("**Identified Themes:**")
+        for topic, keywords in topics.items():
+            with st.expander(f"📌 {topic}"):
+                st.write(", ".join(keywords))
+
+    # --- RAW DATA TABLE ---
+    with st.expander("📄 View Classified Data"):
+        st.dataframe(results)

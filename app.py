@@ -1,130 +1,134 @@
 import streamlit as st
 import pandas as pd
-from components.navigation import sidebar_menu
-from src.validator import validate_dataset
-from src.data_loader import load_dataset
+import time
 from src.config import FILES
+from src.data_loader import load_dataset
+from components.navigation import sidebar_menu
 
-# --- 1. SETUP ---
-st.set_page_config(page_title="Customer Intelligence", layout="wide")
+# --- 1. SESSION STATE SETUP ---
+def init_session_state():
+    if 'data_cache' not in st.session_state: st.session_state['data_cache'] = {}
+    if 'capability_map' not in st.session_state: st.session_state['capability_map'] = {}
+    if 'flags' not in st.session_state: 
+        st.session_state['flags'] = {'churn': False, 'segmentation': False, 'geo': False, 'sentiment': False}
+
+init_session_state()
+
+st.set_page_config(page_title="Customer Intelligence Hub", layout="wide")
 sidebar_menu()
-
-if 'data_cache' not in st.session_state: st.session_state['data_cache'] = {}
-if 'capability_map' not in st.session_state: st.session_state['capability_map'] = {}
-if 'flags' not in st.session_state: st.session_state['flags'] = {}
-if 'meta' not in st.session_state: st.session_state['meta'] = {}
-
 st.title("🧠 Customer Intelligence Hub")
-st.markdown("### 🛠️ Data Configuration Console")
 
-# --- 2. SELECTION PANEL ---
-col1, col2 = st.columns(2)
+# --- 2. THE FIX: LOOSE COLUMN MATCHING ---
+def auto_register_data(df, source_name):
+    """
+    Scans column names using SUBSTRING matching.
+    If 'ReviewBody' exists, it sees 'review' and activates Sentiment.
+    """
+    # Convert all columns to lowercase string for easy matching
+    cols = [str(c).lower() for c in df.columns]
+    detected = []
 
-with col1:
-    selected_module_name = st.selectbox(
-        "1. Select Module to Test",
-        ["Churn Prediction", "Customer Segmentation", "Sentiment Analysis", "Geospatial View"]
-    )
-    KEY_MAP = {
-        "Churn Prediction": "churn",
-        "Customer Segmentation": "segmentation",
-        "Sentiment Analysis": "sentiment",
-        "Geospatial View": "geo"
-    }
-    target_module = KEY_MAP[selected_module_name]
+    # Helper: Check if ANY keyword exists as a substring in ANY column
+    def scan_columns(keywords):
+        for col in cols:
+            for k in keywords:
+                if k in col: return True
+        return False
 
-with col2:
-    data_source = st.radio("2. Select Data Source", ["Use Sample Data", "Upload File"], horizontal=True)
+    # A. SENTIMENT DETECTION
+    # Matches: 'ReviewBody', 'ReviewHeader', 'VerifiedReview'
+    if scan_columns(['review', 'text', 'comment', 'feedback', 'body', 'content', 'rating', 'star']):
+        st.session_state['data_cache']['sentiment'] = df
+        st.session_state['capability_map']['sentiment'] = 'MEMORY'
+        st.session_state['flags']['sentiment'] = True
+        detected.append("❤️ Sentiment")
 
-# --- 3. DATA LOADING ---
+    # B. GEOSPATIAL DETECTION
+    # Matches: 'Route', 'Location', 'Airport'
+    if scan_columns(['lat', 'lon', 'city', 'country', 'airport', 'location', 'route', 'destination', 'origin']):
+        st.session_state['data_cache']['geo'] = df
+        st.session_state['capability_map']['geo'] = 'MEMORY'
+        st.session_state['flags']['geo'] = True
+        detected.append("🌍 Geospatial")
+
+    # C. SEGMENTATION DETECTION
+    # Matches: 'ValueForMoney', 'SeatType', 'TotalCharges'
+    if scan_columns(['amount', 'sales', 'profit', 'quantity', 'total', 'spend', 'value', 'type', 'class']):
+        st.session_state['data_cache']['segmentation'] = df
+        st.session_state['capability_map']['segmentation'] = 'MEMORY'
+        st.session_state['flags']['segmentation'] = True
+        detected.append("📊 Segmentation")
+        
+    # D. CHURN DETECTION
+    if scan_columns(['churn', 'exited', 'status', 'retention']):
+        st.session_state['data_cache']['churn'] = df
+        st.session_state['capability_map']['churn'] = 'MEMORY'
+        st.session_state['flags']['churn'] = True
+        detected.append("🔮 Churn")
+
+    return detected
+
+# --- 3. INTERFACE ---
 st.markdown("---")
-df = pd.DataFrame()
-source_ref = None
-source_type = None
+col1, col2 = st.columns([1, 1])
 
-if data_source == "Use Sample Data":
-    st.info(f"📂 Using default sample for **{selected_module_name}**")
-    # Logic: Geo defaults to sentiment if selected directly, otherwise use target
-    file_key = target_module if target_module != 'geo' else 'sentiment'
-    if st.button("🚀 Load & Validate Sample"):
-        path = FILES.get(file_key)
-        df = load_dataset(path)
-        source_type = "FILE"
-        source_ref = file_key
-
-elif data_source == "Upload File":
-    uploaded_file = st.file_uploader(f"📂 Upload Data for {selected_module_name}", type=["csv", "xlsx"])
-    if uploaded_file and st.button("🚀 Process Upload"):
-        df = load_dataset(uploaded_file)
-        source_type = "MEMORY"
-        source_ref = target_module
-
-# --- 4. VALIDATION LOGIC (UPDATED FOR PIGGYBACKING) ---
-if not df.empty:
-    st.markdown("### 🚦 Validation Results")
+# === SELECT DEMO FILE ===
+with col1:
+    st.subheader("🚀 Load Demo Data")
+    available_files = list(FILES.keys())
     
-    # A. Validate the TARGET Module
-    report = validate_dataset(df, target_module=target_module)
-    module_status = report.get(target_module, {})
-    is_ready = module_status.get('ready', False)
-    
-    if is_ready:
-        st.success(f"✅ **{target_module.upper()}** Capabilities Active!")
+    if available_files:
+        selected_file_key = st.selectbox("Select Dataset:", available_files, format_func=lambda x: x.replace('_', ' ').title())
         
-        # Save Primary Data
-        st.session_state['flags'][target_module] = True
-        if source_type == "MEMORY":
-            st.session_state['data_cache'][target_module] = df
-            st.session_state['capability_map'][target_module] = 'MEMORY'
-        else:
-            st.session_state['capability_map'][target_module] = source_ref
-            
-        # Save Metadata (Flavor/Mapping)
-        if 'flavor' in module_status:
-            detected_flavor = module_status['flavor']
-            st.session_state['meta'][target_module] = {'flavor': detected_flavor}
-            st.info(f"🔹 Detected Sub-Type: **{detected_flavor.title()}**")
-            if module_status['flavors'][detected_flavor]['column_mapping']:
-                st.toast(f"Mapped columns for {target_module}")
-        elif 'column_mapping' in module_status:
-             if module_status['column_mapping']:
-                st.toast(f"Mapped columns for {target_module}")
+        if st.button("Load Selected Dataset", type="primary"):
+            with st.spinner(f"Loading '{selected_file_key}'..."):
+                try:
+                    df = load_dataset(FILES[selected_file_key])
+                    
+                    # Run the loose detection
+                    modules = auto_register_data(df, selected_file_key)
+                    
+                    if modules:
+                        st.success(f"Loaded! Active Modules: {', '.join(modules)}")
+                        time.sleep(1) 
+                        st.rerun()
+                    else:
+                        st.warning("Data loaded, but columns didn't match known patterns.")
+                        st.write("Columns:", df.columns.tolist())
+                        
+                except Exception as e:
+                    st.error(f"Failed to load: {e}")
 
-        # B. AUTO-CHECK FOR GEOSPATIAL (The "Piggyback")
-        # We check if this same dataset ALSO supports Geo
-        geo_report = validate_dataset(df, target_module='geo')
-        geo_status = geo_report.get('geo', {})
-        
-        if geo_status.get('ready'):
-            st.success(f"🌍 **GEOSPATIAL** Capabilities ALSO Detected!")
+# === UPLOAD FILE ===
+with col2:
+    st.subheader("📂 Upload Your Own")
+    uploaded_file = st.file_uploader("Upload CSV / Excel", type=['csv', 'xlsx'])
+    
+    if uploaded_file:
+        try:
+            df_upload = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
             
-            # Enable Geo Flag
-            st.session_state['flags']['geo'] = True
+            # Run the loose detection
+            modules = auto_register_data(df_upload, "Upload")
             
-            # Link Geo to THIS dataset
-            if source_type == "MEMORY":
-                st.session_state['data_cache']['geo'] = df # It's the same DF
-                st.session_state['capability_map']['geo'] = 'MEMORY'
+            if modules:
+                st.success(f"Processed! Active Modules: {', '.join(modules)}")
+                time.sleep(1)
+                st.rerun()
             else:
-                st.session_state['capability_map']['geo'] = source_ref # Same file ref
-            
-            # Store Context: "This Geo data came from Churn/Sentiment/etc"
-            geo_col = geo_status['column_mapping'].get('Location', 'Location') # Default name
-            st.session_state['meta']['geo'] = {
-                'parent_context': target_module,
-                'location_col': geo_col
-            }
-        else:
-            st.caption("No geospatial columns found in this dataset.")
+                st.warning("Could not auto-detect module type. Check column names.")
+                st.write("Columns found:", df_upload.columns.tolist())
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
 
-        st.markdown("---")
-        st.success(f"👉 Navigation Enabled.")
-        
-    else:
-        st.error(f"❌ **{target_module.upper()}** Failed Validation.")
-        if 'flavors' in module_status:
-            st.warning("Data did not match any known patterns:")
-            for flav, res in module_status['flavors'].items():
-                st.write(f"- **{flav.title()}**: Missing `{res['missing']}`")
-        else:
-            st.write(f"Missing Columns: `{module_status.get('missing')}`")
+# --- STATUS ---
+st.markdown("---")
+st.markdown("### 🚦 Active Capabilities")
+c1, c2, c3, c4 = st.columns(4)
+
+def badge(key): return "✅ **Online**" if st.session_state['flags'].get(key) else "⚪ *Offline*"
+
+c1.metric("Churn", badge('churn'))
+c2.metric("Segmentation", badge('segmentation'))
+c3.metric("Geospatial", badge('geo'))
+c4.metric("Sentiment", badge('sentiment'))

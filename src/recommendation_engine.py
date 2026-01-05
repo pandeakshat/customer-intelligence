@@ -1,14 +1,29 @@
 import pandas as pd
+import numpy as np
 
 def generate_business_logic(df_summary: pd.DataFrame, context: str = "demographic") -> pd.DataFrame:
     """
     Main Entry Point. Enriches the summary data with Business Logic.
     
     Args:
-        df_summary: The dataframe containing cluster centers (means).
-        context: The 'flavor' of analysis ('demographic', 'rfm', 'churn', etc.)
+        df_summary: The dataframe containing cluster centers (means) or top metrics.
+        context: The 'flavor' of analysis ('demographic', 'rfm', 'churn', 'geo').
     """
     
+    # --- FIX: ROBUSTNESS CHECK ---
+    # If input is a Series (e.g. from a simple .mean() operation), convert to DataFrame
+    # This prevents the "axis" error in apply()
+    if isinstance(df_summary, pd.Series):
+        df_summary = df_summary.to_frame(name='Value').reset_index()
+        # Rename common index columns if needed
+        if 'index' in df_summary.columns: 
+            df_summary = df_summary.rename(columns={'index': 'Feature'})
+
+    # If input is DataFrame but the relevant info is in the Index
+    if isinstance(df_summary, pd.DataFrame):
+        if df_summary.index.name is not None and df_summary.index.name != list(df_summary.index.names):
+            df_summary = df_summary.reset_index()
+
     # Normalize context string
     ctx = context.lower()
     
@@ -19,40 +34,56 @@ def generate_business_logic(df_summary: pd.DataFrame, context: str = "demographi
     elif ctx == 'rfm':
         return _apply_logic(df_summary, _get_rfm_persona)
     elif ctx == 'churn':
-        # Placeholder for your future Churn Recommendations
         return _apply_logic(df_summary, _get_churn_persona) 
+    elif ctx == 'geo':
+        return _apply_logic(df_summary, _get_geo_persona)
     else:
-        # Fallback: Return as-is if no logic exists
-        return df_summary
+        # Fallback: Return empty dataframe or as-is
+        return pd.DataFrame()
 
 # --- CORE PROCESSING HELPER ---
 def _apply_logic(df, logic_function):
     """Applies a specific logic function row-by-row."""
-    results = df.apply(logic_function, axis=1)
+    if df.empty: return pd.DataFrame()
     
-    # Expand the results (which are dicts) into columns
-    logic_df = pd.DataFrame(results.tolist(), index=df.index)
-    
-    # Combine original stats with new logic
-    return pd.concat([df, logic_df], axis=1)
+    try:
+        results = df.apply(logic_function, axis=1)
+        
+        # Expand the results (which are dicts) into columns
+        # We assume the logic function returns a dict like {'Persona': ..., 'Action': ...}
+        logic_df = pd.DataFrame(results.tolist(), index=df.index)
+        
+        # Return just the logic columns (the calling app usually displays them alongside the original data)
+        return pd.concat([df, logic_df], axis=1)
+    except Exception as e:
+        print(f"Recommendation Engine Error: {e}")
+        # Return safe fallback
+        return pd.DataFrame({'Persona': ['Unknown'], 'Next Best Action': ['Analyze Manually']}, index=df.index)
 
-# --- MODULE 1: DEMOGRAPHIC LOGIC ---
+# ==========================================
+# MODULE 1: DEMOGRAPHIC LOGIC
+# ==========================================
 def _get_demographic_persona(row):
     traits = []
     
+    # Safely get values with defaults
+    fam_size = row.get('Family_Size', 0)
+    age = row.get('Age', 0)
+    spend = row.get('Spending_Score_Num', 0)
+    
     # 1. Family Logic
-    if row['Family_Size'] <= 1.5: traits.append("Solo")
-    elif row['Family_Size'] <= 3.5: traits.append("Small Fam")
+    if fam_size <= 1.5: traits.append("Solo")
+    elif fam_size <= 3.5: traits.append("Small Fam")
     else: traits.append("Large Fam")
         
     # 2. Age Logic
-    if row['Age'] < 30: traits.append("Gen Z")
-    elif row['Age'] < 50: traits.append("Pro")
+    if age < 30: traits.append("Gen Z")
+    elif age < 50: traits.append("Pro")
     else: traits.append("Senior")
         
     # 3. Spend Logic
-    if row['Spending_Score_Num'] > 2.5: traits.append("Spender")
-    elif row['Spending_Score_Num'] < 1.5: traits.append("Saver")
+    if spend > 2.5: traits.append("Spender")
+    elif spend < 1.5: traits.append("Saver")
     
     persona_name = " / ".join(traits)
     
@@ -79,18 +110,21 @@ def _get_demographic_persona(row):
         "Next Best Action": action
     }
 
-# --- MODULE 2: RFM LOGIC ---
+# ==========================================
+# MODULE 2: RFM LOGIC
+# ==========================================
 def _get_rfm_persona(row):
-    # Logic based on relative strength
-    # Note: In a real app, use quantiles here, not hardcoded numbers
-    
     persona = "Standard"
     tactic = "Maintain"
     action = "Weekly Update"
     
-    is_recent = row['Recency'] < 30
-    is_lost = row['Recency'] > 90
-    is_big_spender = row['Monetary'] > 1000 # Placeholder threshold
+    # Get values (assuming standard RFM columns exist)
+    recency = row.get('Recency', 0)
+    monetary = row.get('Monetary', 0)
+    
+    is_recent = recency < 30
+    is_lost = recency > 90
+    is_big_spender = monetary > 1000 
     
     if is_recent and is_big_spender:
         persona = "Champion"
@@ -115,26 +149,19 @@ def _get_rfm_persona(row):
         "Next Best Action": action
     }
 
-# --- MODULE 3: CHURN LOGIC (Future Placeholder) ---
-def _get_churn_persona(row):
-    # Example for when you build Churn Recommendations
-    risk = row.get('probability', 0)
-    return {
-        "Persona": "High Risk" if risk > 0.7 else "Safe",
-        "Strategy": "Intervention" if risk > 0.7 else "Upsell",
-        "Next Best Action": "Call" if risk > 0.7 else "None"
-    }
-
-
-# ... [Previous imports and dispatcher remain the same] ...
-
-# --- MODULE 3: CHURN LOGIC ---
+# ==========================================
+# MODULE 3: CHURN LOGIC
+# ==========================================
 def _get_churn_persona(row):
     """
     Logic for Churn Recommendations.
-    Input row expects: {'probability': 0.85}
     """
+    # Robustly try to find a probability/risk value
     risk = row.get('probability', 0)
+    if 'Value' in row and isinstance(row['Value'], (int, float)):
+        # If generic 'Value' column is small (0-1), assume it's probability
+        if row['Value'] <= 1.0:
+            risk = row['Value']
     
     if risk > 0.8:
         persona = "Flight Risk (Critical)"
@@ -159,52 +186,56 @@ def _get_churn_persona(row):
         "Next Best Action": action
     }
 
-
-
-# [Inside src/recommendation_engine.py]
-
-# 1. UPDATE DISPATCHER
-def generate_business_logic(df_summary: pd.DataFrame, context: str = "demographic") -> pd.DataFrame:
-    ctx = context.lower()
-    if ctx == 'demographic':
-        return _apply_logic(df_summary, _get_demographic_persona)
-    elif ctx == 'rfm':
-        return _apply_logic(df_summary, _get_rfm_persona)
-    elif ctx == 'churn':
-        return _apply_logic(df_summary, _get_churn_persona)
-    elif ctx == 'geo':  # <--- NEW
-        return _apply_logic(df_summary, _get_geo_persona)
-    else:
-        return df_summary
-
-# 2. ADD GEO LOGIC MODULE
+# ==========================================
+# MODULE 4: GEOSPATIAL LOGIC
+# ==========================================
 def _get_geo_persona(row):
     """
     Logic for Geospatial Routes.
-    Input row expects: {'Traffic': int, 'OverallRating': float}
+    Handles both 'Traffic/Rating' (Airline data) and Generic 'Value' (Maps).
     """
-    traffic = row.get('Traffic', 0)
-    rating = row.get('OverallRating', 0)
+    # 1. Try Specific Airline Columns
+    traffic = row.get('Traffic', None)
+    rating = row.get('OverallRating', None)
     
-    # Route Classification Logic
-    if traffic > 50:
-        if rating < 4:
-            persona = "High Volume / Low Satisfaction"
-            tactic = "Operational Fix"
-            action = "Audit Ground Staff & Delays"
+    # 2. Try Generic Columns (from simple Map aggregations)
+    val = row.get('Value', 0)
+    
+    persona = "Key Location"
+    tactic = "Maintain"
+    action = "Monitor Metrics"
+
+    # LOGIC A: Detailed Airline Route Logic
+    if traffic is not None and rating is not None:
+        if traffic > 50:
+            if rating < 4:
+                persona = "High Vol / Low Sat"
+                tactic = "Operational Fix"
+                action = "Audit Ground Staff & Delays"
+            else:
+                persona = "Flagship Route"
+                tactic = "Maximize Yield"
+                action = "Increase Business Class Prices"
+        elif traffic < 10:
+            persona = "Niche / Low Volume"
+            tactic = "Efficiency Check"
+            action = "Evaluate Route Profitability"
         else:
-            persona = "Flagship Route"
-            tactic = "Maximize Yield"
-            action = "Increase Business Class Prices"
-    elif traffic < 10:
-        persona = "Niche / Low Volume"
-        tactic = "Efficiency Check"
-        action = "Evaluate Route Profitability"
-    else:
-        persona = "Standard Route"
-        tactic = "Growth"
-        action = "Seasonal Promotion"
-        
+            persona = "Standard Route"
+            tactic = "Growth"
+            action = "Seasonal Promotion"
+
+    # LOGIC B: Generic Metric Logic (e.g. Spend or Sentiment Score)
+    elif val != 0:
+        if val > 1000: # Assuming High Spend
+            persona = "Power Region"
+            tactic = "Logistics Priority"
+            action = "Scale support operations"
+        elif val < 0: # Assuming Negative Sentiment
+            persona = "Detractor Zone"
+            tactic = "Quality Control"
+            action = "Investigate local reviews"
+            
     return {
         "Persona": persona,
         "Strategy": tactic,
