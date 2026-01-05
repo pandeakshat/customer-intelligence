@@ -248,7 +248,7 @@ with st.container(border=True):
         if st.button("✨ Get Combined Report"):
             st.toast("Feature locked! Contact Sales to upgrade.", icon="🔒")
         
-        st.markdown("[📧 Contact Sales](mailto:sales@customerintelligence.ai)")
+        st.markdown("[📧 Contact Sales](mailto:customerintelligence@pandeakshat.com)")
 
 # Debug Raw Data
 with st.expander("🔍 View Raw Data Row"):
