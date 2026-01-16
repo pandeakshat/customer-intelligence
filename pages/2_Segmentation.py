@@ -41,7 +41,7 @@ def get_active_data(module_key):
     # 3. Fallback
     return st.session_state.get('data_cache', {}).get(module_key, pd.DataFrame())
 
-st.title("📊 Segmentation Deep Dive")
+st.title(" Segmentation Deep Dive")
 
 # 1. LOAD DATA
 flags = st.session_state.get('flags', {})
@@ -59,15 +59,15 @@ elif 'segmentation' in st.session_state.get('data_cache', {}):
     mode_name = "Unknown"
 
 if df.empty:
-    st.error("❌ No Segmentation Data Found.")
+    st.error(" No Segmentation Data Found.")
     st.info("Please go to Home and Load/Upload data.")
     st.stop()
 
 # 2. SIDEBAR TUNING
 with st.sidebar:
-    st.header("⚙️ Hyperparameters")
+    st.header(" Hyperparameters")
     
-    if st.checkbox("💡 Suggest Optimal K?"):
+    if st.checkbox(" Suggest Optimal K?"):
         with st.spinner("Calculating Silhouette Scores..."):
             # Use a sample for speed if dataset is huge
             sample_df = df.head(1000) if len(df) > 1000 else df
@@ -109,7 +109,7 @@ except Exception as e:
     st.stop()
 
 # --- 4. EXECUTIVE SUMMARY (NLG) ---
-st.markdown("### 📝 Executive Summary")
+st.markdown("###  Executive Summary")
 
 # Generate narrative if possible
 try:
@@ -135,7 +135,7 @@ except:
 st.markdown("---")
 
 # 5. VISUALIZATION TABS (Deep Dive)
-tab_3d, tab_rules, tab_strategy = st.tabs(["🧊 Visual Explorer", "🌳 Logic Tree", "🚀 Business Strategy"])
+tab_3d, tab_rules, tab_strategy = st.tabs([" Visual Explorer", " Logic Tree", " Business Strategy"])
 
 # --- TAB 1: 3D EXPLORER ---
 with tab_3d:
@@ -155,7 +155,7 @@ with tab_3d:
 
 # --- TAB 2: LOGIC TREE ---
 with tab_rules:
-    st.subheader("🧠 Logic Tree: How the AI defined the groups")
+    st.subheader(" Logic Tree: How the AI defined the groups")
     st.markdown("Follow the path to see the rules used to create each segment.")
     
     # Map Integer Classes to String Labels for the Tree Plot
@@ -180,7 +180,7 @@ with tab_rules:
 
 # --- TAB 3: BUSINESS STRATEGY ---
 with tab_strategy:
-    st.subheader("💡 Recommendation Engine")
+    st.subheader(" Recommendation Engine")
     
     # Calculate summary stats for the recommendation engine
     summary_stats = seg_df.groupby('Cluster_Label')[dt_features].mean().round(1)
@@ -205,12 +205,12 @@ with tab_strategy:
                     st.code(stats_txt)
                         
                 with col_b:
-                    st.markdown("#### 👤 Persona")
+                    st.markdown("####  Persona")
                     st.write(f"**{row.get('Persona', 'Standard User')}**")
                     st.info(f"Strategy: {row.get('Strategy', 'Maintain')}")
                     
                 with col_c:
-                    st.markdown("#### ⚡ Next Best Action")
-                    st.success(f"👉 {row.get('Next Best Action', 'Review Account')}")
+                    st.markdown("####  Next Best Action")
+                    st.success(f" {row.get('Next Best Action', 'Review Account')}")
     else:
         st.info("No specific strategies generated for this data type.")

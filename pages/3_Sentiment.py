@@ -13,8 +13,8 @@ sidebar_menu()
 # This is crucial: It lets you "Retrain" if you picked the wrong column
 with st.sidebar:
     st.markdown("---")
-    st.header("⚙️ Controls")
-    if st.button("♻️ Reset Analysis", type="secondary"):
+    st.header(" Controls")
+    if st.button(" Reset Analysis", type="secondary"):
         if 'sentiment_results' in st.session_state:
             del st.session_state['sentiment_results']
         if 'topics' in st.session_state:
@@ -30,16 +30,16 @@ def get_sentiment_data():
     return st.session_state.get('data_cache', {}).get('sentiment', pd.DataFrame())
 
 df = get_sentiment_data()
-st.title("❤️ Sentiment & Topic Engine")
+st.title(" Sentiment & Topic Engine")
 
 if df.empty:
-    st.error("❌ No Sentiment Data Found.")
+    st.error(" No Sentiment Data Found.")
     st.info("Please go to Home and load the Airline Reviews dataset.")
     st.stop()
 
 # --- 3. CONFIGURATION (Only show if analysis hasn't run yet) ---
 if 'sentiment_results' not in st.session_state:
-    st.info("📝 Configure your analysis below.")
+    st.info(" Configure your analysis below.")
     
     col_text, col_viz = st.columns(2)
     
@@ -68,7 +68,7 @@ if 'sentiment_results' not in st.session_state:
         st.write(f"*(You can group by '{default_cat}' after analysis)*")
 
     st.markdown("---")
-    if st.button("🚀 Run AI Analysis", type="primary"):
+    if st.button(" Run AI Analysis", type="primary"):
         with st.spinner(f"Analyzing '{text_col}'..."):
             try:
                 analyzer = SentimentAnalyzer()
@@ -101,7 +101,7 @@ else:
     k4.metric("Total Reviews", len(results))
 
     # --- CLASSIFICATION & SLICING ---
-    st.markdown("### 📊 Classification Analysis")
+    st.markdown("###  Classification Analysis")
     
     # Dynamic Grouping
     slice_cols = [c for c in results.columns if results[c].nunique() < 50 and c not in ['Clean_Text', 'Sentiment_Label', 'Sentiment_Score', 'Topic_Label', 'Topic_ID']]
@@ -124,7 +124,7 @@ else:
 
     # --- TOPIC ANALYSIS ---
     st.markdown("---")
-    st.markdown("### 🗣️ Topic Intelligence")
+    st.markdown("###  Topic Intelligence")
     
     t1, t2 = st.columns([2, 1])
     with t1:
@@ -138,9 +138,9 @@ else:
     with t2:
         st.write("**Identified Themes:**")
         for topic, keywords in topics.items():
-            with st.expander(f"📌 {topic}"):
+            with st.expander(f" {topic}"):
                 st.write(", ".join(keywords))
 
     # --- RAW DATA TABLE ---
-    with st.expander("📄 View Classified Data"):
+    with st.expander(" View Classified Data"):
         st.dataframe(results)

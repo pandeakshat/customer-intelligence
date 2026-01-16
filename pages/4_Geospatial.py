@@ -21,11 +21,11 @@ def get_geo_data():
     if source in FILES: return load_dataset(FILES[source])
     return st.session_state.get('data_cache', {}).get('geo', pd.DataFrame())
 
-st.title("🗺️ Geospatial Intelligence")
+st.title(" Geospatial Intelligence")
 df = get_geo_data()
 
 if df.empty or not st.session_state.get('flags', {}).get('geo'):
-    st.error("❌ No Geospatial Data Active.")
+    st.error(" No Geospatial Data Active.")
     st.stop()
 
 if 'geo_engine' not in st.session_state: st.session_state['geo_engine'] = GeoAnalyzer()
@@ -38,7 +38,7 @@ if not loc_col:
     possible = [c for c in df.columns if any(k in c.lower() for k in ['location','route','city','country'])]
     loc_col = possible[0] if possible else df.columns[0]
 
-st.info(f"📍 Analyzing geography from: **{loc_col}**")
+st.info(f" Analyzing geography from: **{loc_col}**")
 
 # Run Engine (Fast Mode)
 status_container = st.empty()
@@ -46,7 +46,7 @@ def update_progress(pct, msg):
     if 'deep_scan_active' in st.session_state: status_container.progress(pct, text=msg)
 
 if 'geo_processed_df' not in st.session_state:
-    with st.spinner("⚡ Rapid Matching..."):
+    with st.spinner(" Rapid Matching..."):
         geo_df = geo_bot.analyze_location_data(df, loc_col, use_api=False)
         st.session_state['geo_processed_df'] = geo_df
 else:
@@ -67,13 +67,13 @@ m3.metric("Unmatched (Unknown City)", unmatched_count)
 m4.metric("Empty / NaN", empty_count)
 
 if unmatched_count > 0:
-    st.warning(f"⚠️ **{unmatched_count} locations** were not found.")
+    st.warning(f" **{unmatched_count} locations** were not found.")
     with st.expander("🔎 View Unmatched Cities"):
         bad_rows = geo_df[geo_df['lat'].isna() & (geo_df['Mapped_Location'].str.len() > 0)]
         if not bad_rows.empty:
             st.dataframe(bad_rows['Mapped_Location'].value_counts().reset_index(name='Count'), use_container_width=True)
 
-    if st.button("🌍 Deep Scan (Use Online API)"):
+    if st.button(" Deep Scan (Use Online API)"):
         st.session_state['deep_scan_active'] = True
         with st.spinner("Connecting to API..."):
             geo_df = geo_bot.analyze_location_data(df, loc_col, use_api=True, progress_callback=update_progress)
@@ -97,7 +97,7 @@ if 'Count' not in plot_df.columns:
     plot_df['Count'] = 1
 
 # --- VISUALIZATION ---
-tab1, tab2 = st.tabs(["📍 Global Map", "🧭 Insights"])
+tab1, tab2 = st.tabs([" Global Map", " Insights"])
 
 with tab1:
     if not plot_df.empty:
@@ -159,7 +159,7 @@ with tab2:
             st.plotly_chart(fig_bar, use_container_width=True)
             
         with c2:
-            st.subheader("🤖 Location Strategy")
+            st.subheader(" Location Strategy")
             # --- THE FIX FOR THE CRASH ---
             # We explicitly pass a DataFrame (reset_index) so the engine doesn't crash on Series
             top_3 = plot_df.groupby('Mapped_Location')[target].mean().nlargest(3).reset_index()
@@ -177,6 +177,6 @@ with tab2:
                     action = row.get('Next Best Action', 'Analyze deeper.')
                     persona = row.get('Persona', 'Key Region')
                     
-                    st.markdown(f"**📍 {loc}**")
+                    st.markdown(f"** {loc}**")
                     st.caption(f"{persona}")
                     st.info(f"{action}")

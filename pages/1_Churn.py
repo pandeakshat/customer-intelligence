@@ -35,8 +35,8 @@ churn_bot = st.session_state['churn_engine']
 # --- SIDEBAR: MANUAL RETRAIN OPTION ---
 with st.sidebar:
     st.markdown("---")
-    st.header("⚙️ Model Controls")
-    if st.button("♻️ Reset & Retrain Model", type="primary"):
+    st.header(" Model Controls")
+    if st.button(" Reset & Retrain Model", type="primary"):
         # Clear model from memory
         st.session_state['churn_engine'] = ChurnPredictor()
         # Optional: Delete physical files to force fresh training
@@ -58,21 +58,21 @@ def get_churn_data():
     return pd.DataFrame()
 
 df = get_churn_data()
-st.title("🔮 Churn Prediction Engine")
+st.title(" Churn Prediction Engine")
 
 if df.empty:
-    st.error("❌ No Churn Data Found.")
-    st.info("Please go to the **Home** page and click '🚀 Load Demo Data' or Upload a file.")
+    st.error(" No Churn Data Found.")
+    st.info("Please go to the **Home** page and click ' Load Demo Data' or Upload a file.")
     st.stop()
 
 # --- 3. TRAINING INTERFACE ---
 # If model is not trained (or was just reset), show this button
 if churn_bot.model is None:
-    st.info(f"📊 Dataset loaded: {len(df)} customer records available.")
+    st.info(f" Dataset loaded: {len(df)} customer records available.")
     
     col1, col2 = st.columns([1, 4])
     with col1:
-        if st.button("🚀 Train Model Now", type="primary"):
+        if st.button(" Train Model Now", type="primary"):
             with st.spinner("Training XGBoost Model..."):
                 metrics = churn_bot.train(df)
             
@@ -84,7 +84,7 @@ if churn_bot.model is None:
     st.stop() # Stop here until trained
 
 # --- 4. MAIN DASHBOARD ---
-tab_dashboard, tab_simulator = st.tabs(["📊 Risk Dashboard", "🧪 What-If Simulator"])
+tab_dashboard, tab_simulator = st.tabs([" Risk Dashboard", " What-If Simulator"])
 
 # === TAB 1: MACRO DASHBOARD ===
 with tab_dashboard:
@@ -129,7 +129,7 @@ with tab_dashboard:
 
     # C. AUTOMATED STRATEGIES
     st.markdown("---")
-    st.subheader("🛡️ AI Retention Plan")
+    st.subheader(" AI Retention Plan")
     col_rec, _ = st.columns([3, 1])
     
     with col_rec:
@@ -153,7 +153,7 @@ with tab_dashboard:
 
 # === TAB 2: SIMULATOR ===
 with tab_simulator:
-    st.subheader("🕵️ Customer Inspector & Simulator")
+    st.subheader(" Customer Inspector & Simulator")
     
     col_input, col_viz = st.columns([1, 2])
     

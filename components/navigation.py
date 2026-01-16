@@ -7,17 +7,17 @@ from src.config import FILES
 def sidebar_menu():
     # --- 1. NAVIGATION LINKS ---
     with st.sidebar:
-        st.page_link("app.py", label="Home", icon="🏠")
-        st.page_link("pages/1_Churn.py", label="Churn Prediction", icon="🔮")
-        st.page_link("pages/2_Segmentation.py", label="Segmentation", icon="👥")
-        st.page_link("pages/3_Sentiment.py", label="Sentiment AI", icon="💬")
-        st.page_link("pages/4_Geospatial.py", label="Geospatial", icon="🗺️")
-        st.page_link("pages/5_Customer_View.py", label="Single Customer View", icon="👤")
+        st.page_link("app.py", label="Home")
+        st.page_link("pages/1_Churn.py", label="Churn Prediction")
+        st.page_link("pages/2_Segmentation.py", label="Segmentation")
+        st.page_link("pages/3_Sentiment.py", label="Sentiment AI")
+        st.page_link("pages/4_Geospatial.py", label="Geospatial")
+        st.page_link("pages/5_Customer_View.py", label="Single Customer View")
         
         st.divider()
         
         # --- 2. DATA CONTROLS (Persistent) ---
-        st.header("📂 Data Settings")
+        st.header(" Data Settings")
         
         # Initialize Cache
         if 'data_cache' not in st.session_state: st.session_state['data_cache'] = {}
@@ -28,7 +28,7 @@ def sidebar_menu():
         # A. LOAD DEMO DATA
         if mode == "Demo Data":
             st.info("Use pre-loaded datasets to test the capabilities.")
-            if st.button("🚀 Load Sample Data", type="primary", use_container_width=True):
+            if st.button("Load Sample Data", type="primary", use_container_width=True):
                 with st.spinner("Hydrating Engines..."):
                     
                     # 1. Load Churn
@@ -49,7 +49,7 @@ def sidebar_menu():
                         st.session_state['data_cache']['sentiment'] = df
                         _check_geo_piggyback(df, 'sentiment')
                         
-                st.success("✅ Demo Data Active!")
+                st.success("Demo Data Active!")
                 st.rerun()
 
         # B. UPLOAD USER DATA

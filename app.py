@@ -16,7 +16,7 @@ init_session_state()
 
 st.set_page_config(page_title="Customer Intelligence Hub", layout="wide")
 sidebar_menu()
-st.title("🧠 Customer Intelligence Hub")
+st.title("Customer Intelligence Hub")
 
 # --- 2. THE FIX: LOOSE COLUMN MATCHING ---
 def auto_register_data(df, source_name):
@@ -41,7 +41,7 @@ def auto_register_data(df, source_name):
         st.session_state['data_cache']['sentiment'] = df
         st.session_state['capability_map']['sentiment'] = 'MEMORY'
         st.session_state['flags']['sentiment'] = True
-        detected.append("❤️ Sentiment")
+        detected.append("Sentiment")
 
     # B. GEOSPATIAL DETECTION
     # Matches: 'Route', 'Location', 'Airport'
@@ -49,7 +49,7 @@ def auto_register_data(df, source_name):
         st.session_state['data_cache']['geo'] = df
         st.session_state['capability_map']['geo'] = 'MEMORY'
         st.session_state['flags']['geo'] = True
-        detected.append("🌍 Geospatial")
+        detected.append("Geospatial")
 
     # C. SEGMENTATION DETECTION
     # Matches: 'ValueForMoney', 'SeatType', 'TotalCharges'
@@ -57,14 +57,14 @@ def auto_register_data(df, source_name):
         st.session_state['data_cache']['segmentation'] = df
         st.session_state['capability_map']['segmentation'] = 'MEMORY'
         st.session_state['flags']['segmentation'] = True
-        detected.append("📊 Segmentation")
+        detected.append("Segmentation")
         
     # D. CHURN DETECTION
     if scan_columns(['churn', 'exited', 'status', 'retention']):
         st.session_state['data_cache']['churn'] = df
         st.session_state['capability_map']['churn'] = 'MEMORY'
         st.session_state['flags']['churn'] = True
-        detected.append("🔮 Churn")
+        detected.append("Churn")
 
     return detected
 
@@ -74,7 +74,7 @@ col1, col2 = st.columns([1, 1])
 
 # === SELECT DEMO FILE ===
 with col1:
-    st.subheader("🚀 Load Demo Data")
+    st.subheader("Load Demo Data")
     available_files = list(FILES.keys())
     
     if available_files:

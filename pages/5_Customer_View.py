@@ -14,7 +14,7 @@ from src.config import FILES
 st.set_page_config(page_title="Customer Inspector", layout="wide")
 sidebar_menu()
 
-st.title("👤 Customer Inspector")
+st.title("Customer Inspector")
 st.markdown("Deep dive into specific datasets to analyze individual customer profiles.")
 
 # --- 1. CONTEXT SELECTION ---
@@ -29,7 +29,7 @@ def get_available_datasets():
 available = get_available_datasets()
 
 if not available:
-    st.error("❌ No Datasets Loaded.")
+    st.error("No Datasets Loaded.")
     st.info("Please go to **Home** and load Churn, Segmentation, or Sentiment data.")
     st.stop()
 
@@ -74,7 +74,7 @@ st.markdown("---")
 # MODE A: CHURN VIEW
 # ==========================================
 if selected_context == 'churn':
-    st.header(f"🔮 Churn Risk Profile: {selected_id}")
+    st.header(f"Churn Risk Profile: {selected_id}")
     
     churn_bot = ChurnPredictor()
     risk_data = churn_bot.predict_single(customer_row.to_dict())
@@ -103,7 +103,7 @@ if selected_context == 'churn':
             st.plotly_chart(fig, use_container_width=True)
             
         with c2:
-            st.subheader("⚠️ Key Risk Drivers")
+            st.subheader("Key Risk Drivers")
             # Dynamic Table: Show top 5 columns that are NOT ID or Churn
             ignore = [id_col, 'Churn', 'churn', 'customerID']
             cols = [c for c in df.columns if c not in ignore][:5]
@@ -114,7 +114,7 @@ if selected_context == 'churn':
 # MODE B: SEGMENTATION VIEW (Fixed Radar)
 # ==========================================
 elif selected_context == 'segmentation':
-    st.header(f"📊 Customer Segment: {selected_id}")
+    st.header(f"Customer Segment: {selected_id}")
     
     seg_bot = SegmentationEngine()
     
@@ -141,7 +141,7 @@ elif selected_context == 'segmentation':
     m3.metric("Cluster ID", cluster_id)
     
     # 3. DYNAMIC RADAR CHART & COMPARISON
-    st.subheader("🎯 Comparative Analysis")
+    st.subheader("Comparative Analysis")
     c_radar, c_table = st.columns([1, 1])
     
     # Identify Numeric Columns for comparison (exclude ID)
@@ -199,7 +199,7 @@ elif selected_context == 'segmentation':
 # MODE C: SENTIMENT VIEW
 # ==========================================
 elif selected_context == 'sentiment':
-    st.header(f"❤️ Voice of Customer: {selected_id}")
+    st.header(f"Voice of Customer: {selected_id}")
     
     sent_bot = SentimentAnalyzer()
     
@@ -223,18 +223,18 @@ elif selected_context == 'sentiment':
         m1.metric("Sentiment Label", label, delta="Positive" if label=="Positive" else "-Negative" if label=="Negative" else "Neutral")
         m2.metric("Confidence Score", f"{score:.2f}")
         
-        st.subheader("📝 Review Content")
+        st.subheader("Review Content")
         st.info(f"\"{raw_text}\"")
         
         if 'Topic_Label' in customer_row:
              st.caption(f"Detected Topic: **{customer_row['Topic_Label']}**")
              
     else:
-        st.warning("⚠️ No text column found.")
+        st.warning("No text column found.")
 
 # --- 4. PREMIUM HOOK ---
 st.markdown("---")
-st.markdown("### 🚀 Enterprise Reports")
+st.markdown("### Enterprise Reports")
 
 with st.container(border=True):
     c_cta1, c_cta2 = st.columns([3, 1])
@@ -242,14 +242,14 @@ with st.container(border=True):
     with c_cta1:
         st.markdown("**Need a Combined 360° Report?**")
         st.caption("Merge Churn Risk + Sentiment History + Lifetime Value into a single PDF dossier.")
-        st.warning("🔒 This feature is available in the **Enterprise Plan**.")
+        st.warning("This feature is available in the **Enterprise Plan**.")
         
     with c_cta2:
-        if st.button("✨ Get Combined Report"):
+        if st.button("Get Combined Report"):
             st.toast("Feature locked! Contact Sales to upgrade.", icon="🔒")
         
-        st.markdown("[📧 Contact Sales](mailto:customerintelligence@pandeakshat.com)")
+        st.markdown("[Contact Sales](mailto:customerintelligence@pandeakshat.com)")
 
 # Debug Raw Data
-with st.expander("🔍 View Raw Data Row"):
+with st.expander("View Raw Data Row"):
     st.write(customer_row)
